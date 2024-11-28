@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Questions de l'Examen de Conduite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .question-card {
+            animation: slideIn 0.5s ease-out;
+        }
+        .active-nav {
+            background-color: #3B82F6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen">
+    <div class="container mx-auto max-w-5xl px-4 py-8">
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-extrabold text-blue-900 mb-4">
+                <i class="fas fa-car-alt mr-3 text-blue-600"></i>
+                Questions de l'Examen de Conduite
+            </h1>
+            <p class="text-gray-600 max-w-2xl mx-auto">
+                Préparez-vous à votre examen avec ces questions essentielles de vérification technique.
+            </p>
+        </header>
+
+        <div class="flex justify-between mt-6">
+            <button id="prev-btn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
+                <i class="fas fa-chevron-left mr-2"></i>Précédent
+            </button>
+            <button id="next-btn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
+                Suivant<i class="fas fa-chevron-right ml-2"></i>
+            </button>
+        </div>
+
+        <div class="bg-white shadow-xl rounded-lg overflow-auto">
+            <div class="flex bg-blue-100">
+                <div id="navigation" class="w-1/4 border-r border-blue-200 p-4 overflowy-scroll">
+                    <h2 class="text-xl font-bold text-blue-800 mb-4">
+                        <i class="fas fa-list-ol mr-2"></i>Questions
+                    </h2>
+                    <div id="nav-buttons" class="space-y-2">
+                        <!-- Navigation buttons will be dynamically inserted here -->
+                    </div>
+                </div>
+
+                <div id="questions-container" class="w-3/4 p-6 relative">
+                    <!-- Questions will be dynamically inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var  questionsData;
+        async function fetchJSONData() {
+            await fetch("./questions.json")
+                .then(async (res) => {
+                    if (!res.ok) {
+                        throw new Error
+                            (`HTTP error! Status: ${res.status}`);
+                    }
+                    questionsData = await res.json();
+                })
+                .catch((error) =>
+                    console.error("Unable to fetch data:", error));
+        }
+
+        let currentQuestionIndex = 0;
+
+        function createQuestionCard(question) {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            
+            card.innerHTML = `
+                <div class="space-y-4">
+                    <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                        <h3 class="text-xl font-semibold text-blue-800 mb-2">
+                            <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                            Vérifications (Question ${question.question})
+                        </h3>
+                        <div class="bg-white p-3 rounded shadow-sm">
+                            <p class="mb-2"><strong>Question:</strong> ${question.verification.details}</p>
+                            <p class="text-green-700"><strong>Réponse:</strong> ${question.verification.answer}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
+                        <h3 class="text-xl font-semibold text-yellow-800 mb-2">
+                            <i class="fas fa-road mr-2 text-yellow-600"></i>
+                            Sécurité Routière
+                        </h3>
+                        <div class="bg-white p-3 rounded shadow-sm">
+                            <p class="mb-2"><strong>Question:</strong> ${question.securite.details}</p>
+                            <p class="text-yellow-700"><strong>Réponse:</strong> ${question.securite.answer}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-red-50 p-4 rounded-lg border-l-4 border-red-500">
+                        <h3 class="text-xl font-semibold text-red-800 mb-2">
+                            <i class="fas fa-first-aid mr-2 text-red-600"></i>
+                            Premiers Secours
+                        </h3>
+                        <div class="bg-white p-3 rounded shadow-sm">
+                            <p class="mb-2"><strong>Question:</strong> ${question.premier_secours.details}</p>
+                            <p class="text-red-700"><strong>Réponse:</strong> ${question.premier_secours.answer}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        function createNavButtons() {
+            const navContainer = document.getElementById('nav-buttons');
+            navContainer.innerHTML = ''; // Clear existing buttons
+
+            questionsData.forEach((question, index) => {
+                const button = document.createElement('button');
+                button.textContent = `Question ${question.question}`;
+                button.className = `w-full p-2 text-left rounded ${index === currentQuestionIndex ? 'active-nav' : 'bg-blue-100 hover:bg-blue-200'}`;
+                button.addEventListener('click', () => showQuestion(index));
+                navContainer.appendChild(button);
+            });
+        }
+
+        function showQuestion(index) {
+            // Ensure index is within bounds
+            currentQuestionIndex = Math.max(0, Math.min(index, questionsData.length - 1));
+            
+            const container = document.getElementById('questions-container');
+            container.innerHTML = ''; // Clear previous question
+            container.appendChild(createQuestionCard(questionsData[currentQuestionIndex]));
+            
+            // Update navigation buttons
+            createNavButtons();
+            
+            // Update prev/next button states
+            document.getElementById('prev-btn').disabled = currentQuestionIndex === 0;
+            document.getElementById('next-btn').disabled = currentQuestionIndex === questionsData.length - 1;
+        }
+
+        // Event listeners for navigation
+        document.getElementById('prev-btn').addEventListener('click', () => {
+            if (currentQuestionIndex > 0) {
+                showQuestion(currentQuestionIndex - 1);
+            }
+        });
+
+        document.getElementById('next-btn').addEventListener('click', () => {
+            if (currentQuestionIndex < questionsData.length - 1) {
+                showQuestion(currentQuestionIndex + 1);
+            }
+        });
+
+        document.body.  addEventListener('keyup', (e) => {
+            if (((e.keyCode == "ArrowUp" || e.key == "ArrowLeft")) && currentQuestionIndex > 0) {
+                showQuestion(currentQuestionIndex - 1);
+            }
+        });
+
+        document.body.addEventListener('keyup', (e) => {
+            if (((e.keyCode == "ArrowDown" || e.key == "ArrowRight")) && currentQuestionIndex < questionsData.length - 1) {
+                showQuestion(currentQuestionIndex + 1);
+            }
+        });
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', async () => {
+            await fetchJSONData();
+            createNavButtons();
+            showQuestion(0);
+        });
+    </script>
+</body>
+</html>
